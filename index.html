@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robo Raptors Teams Database</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Chakra Petch for robotics tech styling -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            raptor: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              accent: '#10b981',
+              gold: '#fbbf24',
+              dark: '#080C14',
+              panel: '#101726',
+              border: '#1E293B',
+              card: '#141F32'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            tech: ['Chakra Petch', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Custom sleek scrollbars */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080c14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #10b981;
+    }
+    .neon-border {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.12);
+    }
+    .editing-pulse {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+      50% { border-color: rgba(245, 158, 11, 0.9); box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); }
+    }
+  </style>
+</head>
+<body class="bg-raptor-dark text-gray-100 font-sans min-h-screen antialiased flex flex-col selection:bg-emerald-500 selection:text-black">
+
+  <!-- Notification Toast Container -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-140%] opacity-0 pointer-events-none bg-emerald-950/95 border border-emerald-500/60 text-emerald-200 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 backdrop-blur-md">
+    <svg id="toastIcon" class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <span id="toastMsg" class="text-sm font-medium">Notification message</span>
+  </div>
+
+  <!-- Header & Navigation -->
+  <header class="border-b border-raptor-border bg-raptor-panel/95 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+      
+      <!-- Brand & Raptors Logo -->
+      <div class="flex items-center space-x-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950/60 flex-shrink-0">
+          <svg class="w-6 h-6 text-black" viewBox="0 0 24 24" fill="currentColor">
+            <!-- Raptor Claw Emblem -->
+            <path d="M12 2L4 7v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V7l-8-5zm0 4a3 3 0 013 3c0 1.3-.84 2.4-2 2.82V15h-2v-3.18c-1.16-.42-2-1.52-2-2.82a3 3 0 013-3zm4 9.5c0 .83-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5v-1h8v1z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-tech font-bold tracking-wider text-white flex items-center gap-2">
+            ROBO RAPTORS <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-sans font-semibold tracking-normal uppercase">VEX IQ</span>
+          </h1>
+          <p class="text-xs text-gray-400">Teams Database &amp; Scouting Memory</p>
+        </div>
+      </div>
+
+      <!-- Memory Counter Indicators -->
+      <div class="flex items-center gap-2 sm:gap-4 bg-raptor-dark/90 px-4 py-2 rounded-2xl border border-raptor-border">
+        <div class="flex items-center gap-2 pr-3 border-r border-raptor-border">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs sm:text-sm text-gray-300 font-medium">Teams in Memory:</span>
+          <span id="teamsCountBadge" class="text-base sm:text-lg font-tech font-bold text-emerald-400">0</span>
+        </div>
+        <div class="flex items-center gap-2 pl-1">
+          <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <span class="text-xs sm:text-sm text-gray-300 font-medium">Awards in Memory:</span>
+          <span id="awardsCountBadge" class="text-base sm:text-lg font-tech font-bold text-amber-400">0</span>
+        </div>
+      </div>
+
+      <!-- Action Tools: Code Export, Copy Code, JSON Backup -->
+      <div class="flex items-center flex-wrap gap-2">
+        <button onclick="downloadSelfContainedHtml()" title="Download single HTML file with current memory baked in" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 transition flex items-center gap-1.5 active:scale-95 shadow-sm">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export Updated Code (.html)
+        </button>
+
+        <button onclick="copySelfContainedHtml()" title="Copy entire HTML code with embedded saved memory to clipboard" class="px-2.5 py-1.5 text-xs font-medium rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1.5 active:scale-95">
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          Copy Code
+        </button>
+
+        <button onclick="exportJsonBackup()" title="Export JSON database backup" class="px-2.5 py-1.5 text-xs font-medium rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1 active:scale-95">
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>
+          JSON
+        </button>
+
+        <label title="Import JSON database backup" class="cursor-pointer px-2.5 py-1.5 text-xs font-medium rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center gap-1 active:scale-95">
+          <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Import
+          <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="importJsonBackup(event)" />
+        </label>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+    <!-- Left Column: The Teams Template & Awards Panel (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- THE TEAMS TEMPLATE FORM -->
+      <section id="templateCard" class="bg-raptor-panel rounded-2xl border border-raptor-border p-6 shadow-xl relative overflow-hidden neon-border transition-all">
+        <div class="flex items-center justify-between border-b border-raptor-border pb-4 mb-5">
+          <div>
+            <h2 id="formHeaderTitle" class="text-lg font-tech font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+              <span id="formStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              The Teams Template
+            </h2>
+            <p id="formHeaderSub" class="text-xs text-gray-400 mt-0.5">Input team specifications into memory</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="formModeTag" class="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono tracking-wider font-semibold">NEW ENTRY</span>
+            <button id="cancelEditHeaderBtn" onclick="resetTeamForm()" type="button" class="hidden text-xs text-amber-400 hover:text-amber-300 hover:underline">Cancel</button>
+          </div>
+        </div>
+
+        <form id="teamTemplateForm" class="space-y-4" onsubmit="handleTeamSubmit(event)">
+          <input type="hidden" id="editingTeamId" value="" />
+
+          <!-- Team Number & Name -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Team Number &amp; Name <span class="text-emerald-400">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="teamNumberAndName" 
+              required 
+              placeholder="e.g. 98548A - Cyber Claw"
+              class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            />
+          </div>
+
+          <!-- Robot Type (Arm, Shooter, Catapult, other.) -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Robot Type (Arm, Shooter, Catapult, other.)
+            </label>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4 mb-2">
+              <label class="flex items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer hover:border-emerald-500/50 text-xs text-gray-300 transition">
+                <input type="radio" name="robotTypeRadio" value="Arm" checked class="sr-only" onchange="syncRobotType('Arm')">
+                <span class="type-pill">Arm</span>
+              </label>
+              <label class="flex items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer hover:border-emerald-500/50 text-xs text-gray-300 transition">
+                <input type="radio" name="robotTypeRadio" value="Shooter" class="sr-only" onchange="syncRobotType('Shooter')">
+                <span class="type-pill">Shooter</span>
+              </label>
+              <label class="flex items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer hover:border-emerald-500/50 text-xs text-gray-300 transition">
+                <input type="radio" name="robotTypeRadio" value="Catapult" class="sr-only" onchange="syncRobotType('Catapult')">
+                <span class="type-pill">Catapult</span>
+              </label>
+              <label class="flex items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer hover:border-emerald-500/50 text-xs text-gray-300 transition">
+                <input type="radio" name="robotTypeRadio" value="Other" class="sr-only" onchange="syncRobotType('Other')">
+                <span class="type-pill">Other</span>
+              </label>
+            </div>
+            <input 
+              type="text" 
+              id="robotTypeCustom" 
+              placeholder="Or specify custom Robot Type..." 
+              class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            />
+          </div>
+
+          <!-- Scoring Strengths (Floor Goal, L1, L2, L3, or L4) -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Scoring Strengths (Floor Goal, L1, L2, L3, or L4)
+            </label>
+            <div class="grid grid-cols-5 gap-1.5">
+              <label class="flex flex-col items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer text-xs text-gray-300 hover:border-emerald-500 transition">
+                <input type="checkbox" name="scoringStrength" value="Floor Goal" class="rounded text-emerald-500 focus:ring-emerald-500 bg-gray-900 border-gray-700">
+                <span class="mt-1 text-[11px] font-medium text-center">Floor</span>
+              </label>
+              <label class="flex flex-col items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer text-xs text-gray-300 hover:border-emerald-500 transition">
+                <input type="checkbox" name="scoringStrength" value="L1" class="rounded text-emerald-500 focus:ring-emerald-500 bg-gray-900 border-gray-700">
+                <span class="mt-1 text-[11px] font-medium">L1</span>
+              </label>
+              <label class="flex flex-col items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer text-xs text-gray-300 hover:border-emerald-500 transition">
+                <input type="checkbox" name="scoringStrength" value="L2" class="rounded text-emerald-500 focus:ring-emerald-500 bg-gray-900 border-gray-700">
+                <span class="mt-1 text-[11px] font-medium">L2</span>
+              </label>
+              <label class="flex flex-col items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer text-xs text-gray-300 hover:border-emerald-500 transition">
+                <input type="checkbox" name="scoringStrength" value="L3" class="rounded text-emerald-500 focus:ring-emerald-500 bg-gray-900 border-gray-700">
+                <span class="mt-1 text-[11px] font-medium">L3</span>
+              </label>
+              <label class="flex flex-col items-center justify-center p-2 rounded-xl bg-raptor-dark border border-raptor-border cursor-pointer text-xs text-gray-300 hover:border-emerald-500 transition">
+                <input type="checkbox" name="scoringStrength" value="L4" class="rounded text-emerald-500 focus:ring-emerald-500 bg-gray-900 border-gray-700">
+                <span class="mt-1 text-[11px] font-medium">L4</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Driving Skill -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Driving Skill (0-20, 21-50, 51-70, 71-90, 91-110, 111-150, 151-200, 200+)
+            </label>
+            <select 
+              id="drivingSkill"
+              class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            >
+              <option value="">Select skill range...</option>
+              <option value="0-20">0-20</option>
+              <option value="21-50">21-50</option>
+              <option value="51-70">51-70</option>
+              <option value="71-90">71-90</option>
+              <option value="91-110">91-110</option>
+              <option value="111-150">111-150</option>
+              <option value="151-200">151-200</option>
+              <option value="200+">200+</option>
+            </select>
+          </div>
+
+          <!-- Autonomous Capability: [ ] Yes [ ] No (Score: _____) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-raptor-dark/60 p-3.5 rounded-xl border border-raptor-border">
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
+                Autonomous Capability
+              </label>
+              <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center text-xs text-gray-200 cursor-pointer">
+                  <input type="radio" name="autoCapable" value="Yes" class="form-radio text-emerald-500 bg-gray-900 border-gray-700">
+                  <span class="ml-2 font-medium">Yes</span>
+                </label>
+                <label class="inline-flex items-center text-xs text-gray-200 cursor-pointer">
+                  <input type="radio" name="autoCapable" value="No" class="form-radio text-rose-500 bg-gray-900 border-gray-700" checked>
+                  <span class="ml-2 font-medium">No</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">
+                Score (Auto)
+              </label>
+              <input 
+                type="text" 
+                id="autoScore" 
+                placeholder="Score: ____" 
+                class="w-full bg-raptor-dark border border-raptor-border rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <!-- Dimensions: [ ] Fits in size [ ] Barely fits -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Dimensions
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center space-x-2 bg-raptor-dark p-2.5 rounded-xl border border-raptor-border cursor-pointer hover:border-emerald-500/50 transition">
+                <input type="radio" name="dimensions" value="Fits in size" checked class="text-emerald-500 bg-gray-900 border-gray-700 focus:ring-emerald-500">
+                <span class="text-xs text-gray-200 font-medium">Fits in size</span>
+              </label>
+              <label class="flex items-center space-x-2 bg-raptor-dark p-2.5 rounded-xl border border-raptor-border cursor-pointer hover:border-emerald-500/50 transition">
+                <input type="radio" name="dimensions" value="Barely fits" class="text-amber-500 bg-gray-900 border-gray-700 focus:ring-amber-500">
+                <span class="text-xs text-gray-200 font-medium">Barely fits</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Notes on Reliability -->
+          <div class="space-y-2.5 bg-raptor-dark/40 p-3.5 rounded-xl border border-raptor-border">
+            <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Notes on Reliability:</span>
+            <div>
+              <label class="block text-[11px] text-gray-400 mb-0.5">Does it break often?</label>
+              <input 
+                type="text" 
+                id="breakOften" 
+                placeholder="e.g. Rarely, gear slips under heavy load" 
+                class="w-full bg-raptor-dark border border-raptor-border rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] text-gray-400 mb-0.5">Is it consistent?</label>
+              <input 
+                type="text" 
+                id="isConsistent" 
+                placeholder="e.g. Consistent on L2, occasional misses on high goal" 
+                class="w-full bg-raptor-dark border border-raptor-border rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <!-- Compatibility -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Compatibility <span class="text-gray-400 lowercase font-normal">(How well would it work with our robot?)</span>
+            </label>
+            <textarea 
+              id="compatibility" 
+              rows="2" 
+              placeholder="Synergy notes, cycle pairing, path blocking, communication..."
+              class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            ></textarea>
+          </div>
+
+          <!-- Tournament and Date -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
+              Tournament and Date
+            </label>
+            <input 
+              type="text" 
+              id="tournamentDate" 
+              placeholder="e.g. Virginia State Qualifier - Oct 2026" 
+              class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+            />
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-3 pt-2">
+            <button 
+              type="submit" 
+              id="saveBtn"
+              class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-950/40 transition active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              <span>Save Team to Memory</span>
+            </button>
+            <button 
+              type="button" 
+              id="cancelResetBtn"
+              onclick="resetTeamForm()"
+              class="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium rounded-xl text-xs uppercase tracking-wider border border-gray-700 transition"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- AWARDS REGISTRY SECTION -->
+      <section class="bg-raptor-panel rounded-2xl border border-raptor-border p-6 shadow-xl relative">
+        <div class="flex items-center justify-between border-b border-raptor-border pb-3 mb-4">
+          <h2 class="text-base font-tech font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            Awards Registry
+          </h2>
+          <span class="text-[11px] text-gray-400">Track Accolades</span>
+        </div>
+
+        <form id="awardForm" onsubmit="handleAwardSubmit(event)" class="space-y-3 mb-4">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Award Name <span class="text-amber-400">*</span></label>
+            <input 
+              type="text" 
+              id="awardName" 
+              required 
+              placeholder="e.g. Excellence Award, Design Award, Teamwork 1st" 
+              class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Team <span class="text-amber-400">*</span></label>
+              <input 
+                type="text" 
+                id="awardTeam" 
+                required 
+                placeholder="Team Number / Name" 
+                list="teamsDataList"
+                class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition"
+              />
+              <datalist id="teamsDataList"></datalist>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1">Tournament / Date</label>
+              <input 
+                type="text" 
+                id="awardTournament" 
+                placeholder="e.g. Regional Finals - Oct 2026" 
+                class="w-full bg-raptor-dark border border-raptor-border rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition"
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold py-2 px-3 rounded-xl text-xs uppercase tracking-wider transition active:scale-[0.98] shadow-md shadow-amber-950/30 flex items-center justify-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z"/></svg>
+            Save Award
+          </button>
+        </form>
+
+        <!-- Awards List Table/Cards -->
+        <div class="border-t border-raptor-border pt-3">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Recorded Awards</h3>
+            <span id="awardsSubCount" class="text-[10px] text-gray-500"></span>
+          </div>
+          <div id="awardsContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+            <!-- Dynamic awards entries -->
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right Column: Database Memory Bank (7 cols) -->
+    <div class="lg:col-span-7 flex flex-col space-y-4">
+      
+      <!-- Search, Filter & Quick Options -->
+      <div class="bg-raptor-panel rounded-2xl border border-raptor-border p-4 shadow-xl space-y-3">
+        <div class="flex flex-col sm:flex-row gap-2.5">
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-3 top-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input 
+              type="text" 
+              id="searchMemory" 
+              placeholder="Search by team, name, notes, or tournament..." 
+              oninput="renderTeams()"
+              class="w-full pl-9 pr-4 py-2 bg-raptor-dark border border-raptor-border rounded-xl text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select 
+              id="filterRobotType" 
+              onchange="renderTeams()"
+              class="bg-raptor-dark border border-raptor-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-emerald-500"
+            >
+              <option value="ALL">All Robot Types</option>
+              <option value="Arm">Arm</option>
+              <option value="Shooter">Shooter</option>
+              <option value="Catapult">Catapult</option>
+              <option value="Other">Other / Custom</option>
+            </select>
+
+            <select 
+              id="filterDriving" 
+              onchange="renderTeams()"
+              class="bg-raptor-dark border border-raptor-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-emerald-500"
+            >
+              <option value="ALL">All Driver Skills</option>
+              <option value="0-20">0-20</option>
+              <option value="21-50">21-50</option>
+              <option value="51-70">51-70</option>
+              <option value="71-90">71-90</option>
+              <option value="91-110">91-110</option>
+              <option value="111-150">111-150</option>
+              <option value="151-200">151-200</option>
+              <option value="200+">200+</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teams Memory List Header -->
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-sm font-tech font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <span>Database Memory Records</span>
+          <span id="filteredCountTag" class="text-xs font-sans text-gray-500 font-normal"></span>
+        </h2>
+        <div class="flex items-center gap-3">
+          <button 
+            onclick="confirmWipeDatabase()" 
+            class="text-xs text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Clear Memory
+          </button>
+        </div>
+      </div>
+
+      <!-- Teams Display Cards -->
+      <div id="teamsCardContainer" class="space-y-4 flex-1">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Delete Modal Confirmation -->
+  <div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+    <div class="bg-raptor-panel border border-raptor-border max-w-sm w-full rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <div class="text-center">
+        <h3 class="text-base font-semibold text-white">Delete from Memory?</h3>
+        <p id="deleteModalMsg" class="text-xs text-gray-400 mt-1">This action will remove the record from memory.</p>
+      </div>
+      <div class="flex gap-3">
+        <button id="cancelDeleteBtn" onclick="closeDeleteModal()" class="flex-1 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-xs font-semibold">Cancel</button>
+        <button id="confirmDeleteBtn" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-rose-950/40">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-raptor-border py-4 bg-raptor-dark text-center text-xs text-gray-500">
+    Robo Raptors Scouting &bull; VEX IQ Tournament Memory Assistant &bull; Offline &amp; Persistent Auto-Save
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    // Storage Keys
+    const STORAGE_KEY_TEAMS = 'robo_raptors_teams_v1';
+    const STORAGE_KEY_AWARDS = 'robo_raptors_awards_v1';
+
+    // Application State - Can be pre-baked when exporting updated code
+    // %EMBEDDED_DATA_HOOK%
+    let teams = [];
+    let awards = [];
+    let pendingDelete = null;
+
+    // Toast helper
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.textContent = message;
+      if (type === 'amber') {
+        toast.className = 'fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 bg-amber-950/95 border border-amber-500/60 text-amber-200 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 backdrop-blur-md';
+        toastIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>`;
+      } else {
+        toast.className = 'fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100 bg-emerald-950/95 border border-emerald-500/60 text-emerald-200 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 backdrop-blur-md';
+        toastIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>`;
+      }
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-[-140%]', 'opacity-0', 'pointer-events-none');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+
+    // Initialize application data
+    function init() {
+      try {
+        const storedTeams = localStorage.getItem(STORAGE_KEY_TEAMS);
+        const storedAwards = localStorage.getItem(STORAGE_KEY_AWARDS);
+
+        if (storedTeams) {
+          teams = JSON.parse(storedTeams);
+        }
+        if (storedAwards) {
+          awards = JSON.parse(storedAwards);
+        }
+      } catch (err) {
+        console.error('Failed to load localStorage', err);
+      }
+
+      updateCounters();
+      renderTeams();
+      renderAwards();
+      populateTeamSuggestions();
+    }
+
+    // Persist to local storage (Saves every change instantly)
+    function persistData() {
+      try {
+        localStorage.setItem(STORAGE_KEY_TEAMS, JSON.stringify(teams));
+        localStorage.setItem(STORAGE_KEY_AWARDS, JSON.stringify(awards));
+      } catch (e) {
+        console.error('Storage quota exceeded or error', e);
+      }
+      updateCounters();
+      populateTeamSuggestions();
+    }
+
+    // Update Counter Badges
+    function updateCounters() {
+      document.getElementById('teamsCountBadge').textContent = teams.length;
+      document.getElementById('awardsCountBadge').textContent = awards.length;
+      document.getElementById('awardsSubCount').textContent = awards.length ? `${awards.length} tracked` : '';
+    }
+
+    // Update autocomplete for award teams
+    function populateTeamSuggestions() {
+      const datalist = document.getElementById('teamsDataList');
+      datalist.innerHTML = '';
+      teams.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.teamNumberAndName;
+        datalist.appendChild(opt);
+      });
+    }
+
+    // Synchronize robot type custom input
+    function syncRobotType(val) {
+      const customInput = document.getElementById('robotTypeCustom');
+      if (val === 'Other') {
+        customInput.focus();
+      } else {
+        customInput.value = '';
+      }
+    }
+
+    // Handle Team Template Form Submit (Supports both Adding NEW and UPDATING existing)
+    function handleTeamSubmit(e) {
+      e.preventDefault();
+
+      const editId = document.getElementById('editingTeamId').value.trim();
+      const teamNumberAndName = document.getElementById('teamNumberAndName').value.trim();
+
+      // Robot Type selection
+      let robotType = document.getElementById('robotTypeCustom').value.trim();
+      if (!robotType) {
+        const selectedRadio = document.querySelector('input[name="robotTypeRadio"]:checked');
+        robotType = selectedRadio ? selectedRadio.value : 'Arm';
+      }
+
+      // Scoring Strengths
+      const scoringCheckboxes = document.querySelectorAll('input[name="scoringStrength"]:checked');
+      const scoringStrengths = Array.from(scoringCheckboxes).map(cb => cb.value);
+
+      // Driving Skill
+      const drivingSkill = document.getElementById('drivingSkill').value;
+
+      // Autonomous Capability & Autonomous Score
+      const autoCapableElem = document.querySelector('input[name="autoCapable"]:checked');
+      const autoCapable = autoCapableElem ? autoCapableElem.value : 'No';
+      const autoScore = document.getElementById('autoScore').value.trim();
+
+      // Dimensions
+      const dimElem = document.querySelector('input[name="dimensions"]:checked');
+      const dimensions = dimElem ? dimElem.value : 'Fits in size';
+
+      // Notes on Reliability
+      const breakOften = document.getElementById('breakOften').value.trim();
+      const isConsistent = document.getElementById('isConsistent').value.trim();
+
+      // Compatibility & Tournament Date
+      const compatibility = document.getElementById('compatibility').value.trim();
+      const tournamentDate = document.getElementById('tournamentDate').value.trim();
+
+      if (editId) {
+        // UPDATE EXISTING TEAM
+        const idx = teams.findIndex(t => t.id === editId);
+        if (idx !== -1) {
+          teams[idx] = {
+            ...teams[idx],
+            teamNumberAndName,
+            robotType: robotType || 'Arm',
+            scoringStrengths,
+            drivingSkill,
+            autoCapable,
+            autoScore,
+            dimensions,
+            breakOften,
+            isConsistent,
+            compatibility,
+            tournamentDate,
+            updatedAt: new Date().toISOString()
+          };
+          showToast(`Updated "${teamNumberAndName}" in memory!`);
+        }
+      } else {
+        // ADD NEW TEAM ENTRY
+        const newTeam = {
+          id: 'raptor_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          teamNumberAndName,
+          robotType: robotType || 'Arm',
+          scoringStrengths,
+          drivingSkill,
+          autoCapable,
+          autoScore,
+          dimensions,
+          breakOften,
+          isConsistent,
+          compatibility,
+          tournamentDate,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        teams.unshift(newTeam);
+        showToast(`Saved "${teamNumberAndName}" to memory!`);
+      }
+
+      // Persist changes to memory instantly
+      persistData();
+      renderTeams();
+      resetTeamForm();
+    }
+
+    // Reset Form to New Entry State
+    function resetTeamForm() {
+      document.getElementById('teamTemplateForm').reset();
+      document.getElementById('editingTeamId').value = '';
+      document.getElementById('robotTypeCustom').value = '';
+
+      // Reset Radio to Default
+      const armRadio = document.querySelector('input[name="robotTypeRadio"][value="Arm"]');
+      if (armRadio) armRadio.checked = true;
+      const fitsRadio = document.querySelector('input[name="dimensions"][value="Fits in size"]');
+      if (fitsRadio) fitsRadio.checked = true;
+      const autoNo = document.querySelector('input[name="autoCapable"][value="No"]');
+      if (autoNo) autoNo.checked = true;
+
+      // Styling reset
+      const formCard = document.getElementById('templateCard');
+      formCard.classList.remove('editing-pulse', 'border-amber-500/60');
+      formCard.classList.add('border-raptor-border');
+
+      document.getElementById('formHeaderTitle').className = 'text-lg font-tech font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2';
+      document.getElementById('formStatusDot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse';
+      document.getElementById('formHeaderSub').textContent = 'Input team specifications into memory';
+
+      document.getElementById('formModeTag').textContent = 'NEW ENTRY';
+      document.getElementById('formModeTag').className = 'text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono tracking-wider font-semibold';
+      document.getElementById('cancelEditHeaderBtn').classList.add('hidden');
+
+      document.getElementById('saveBtn').className = 'flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-950/40 transition active:scale-[0.98] flex items-center justify-center gap-2';
+      document.getElementById('saveBtn').innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        <span>Save Team to Memory</span>
+      `;
+      document.getElementById('cancelResetBtn').textContent = 'Clear';
+    }
+
+    // Edit Team Action: Populates The Teams Template with team data
+    function editTeam(id) {
+      const team = teams.find(t => t.id === id);
+      if (!team) return;
+
+      document.getElementById('editingTeamId').value = team.id;
+      document.getElementById('teamNumberAndName').value = team.teamNumberAndName || '';
+
+      // Robot Type matching
+      const standardTypes = ['arm', 'shooter', 'catapult', 'other'];
+      const rRadios = document.querySelectorAll('input[name="robotTypeRadio"]');
+      let matched = false;
+
+      rRadios.forEach(radio => {
+        if (radio.value.toLowerCase() === (team.robotType || '').toLowerCase()) {
+          radio.checked = true;
+          matched = true;
+        } else {
+          radio.checked = false;
+        }
+      });
+
+      if (!matched && team.robotType) {
+        const otherRadio = document.querySelector('input[name="robotTypeRadio"][value="Other"]');
+        if (otherRadio) otherRadio.checked = true;
+        document.getElementById('robotTypeCustom').value = team.robotType;
+      } else {
+        document.getElementById('robotTypeCustom').value = '';
+      }
+
+      // Scoring Strengths
+      const scoringCbs = document.querySelectorAll('input[name="scoringStrength"]');
+      scoringCbs.forEach(cb => {
+        cb.checked = Array.isArray(team.scoringStrengths) && team.scoringStrengths.includes(cb.value);
+      });
+
+      // Driving Skill
+      document.getElementById('drivingSkill').value = team.drivingSkill || '';
+
+      // Autonomous
+      const autoRadios = document.querySelectorAll('input[name="autoCapable"]');
+      autoRadios.forEach(radio => {
+        radio.checked = (radio.value === team.autoCapable);
+      });
+      document.getElementById('autoScore').value = team.autoScore || '';
+
+      // Dimensions
+      const dimRadios = document.querySelectorAll('input[name="dimensions"]');
+      dimRadios.forEach(radio => {
+        radio.checked = (radio.value === team.dimensions);
+      });
+
+      // Reliability
+      document.getElementById('breakOften').value = team.breakOften || '';
+      document.getElementById('isConsistent').value = team.isConsistent || '';
+
+      // Compatibility & Tournament
+      document.getElementById('compatibility').value = team.compatibility || '';
+      document.getElementById('tournamentDate').value = team.tournamentDate || '';
+
+      // Apply EDITING UI state
+      const formCard = document.getElementById('templateCard');
+      formCard.classList.add('editing-pulse', 'border-amber-500/60');
+      formCard.classList.remove('border-raptor-border');
+
+      document.getElementById('formHeaderTitle').className = 'text-lg font-tech font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2';
+      document.getElementById('formStatusDot').className = 'w-2.5 h-2.5 rounded-full bg-amber-400 inline-block animate-ping';
+      document.getElementById('formHeaderSub').textContent = `Editing: ${team.teamNumberAndName}`;
+
+      document.getElementById('formModeTag').textContent = 'EDITING';
+      document.getElementById('formModeTag').className = 'text-xs px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono tracking-wider font-semibold';
+      document.getElementById('cancelEditHeaderBtn').classList.remove('hidden');
+
+      document.getElementById('saveBtn').className = 'flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-amber-950/40 transition active:scale-[0.98] flex items-center justify-center gap-2';
+      document.getElementById('saveBtn').innerHTML = `
+        <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Update Team Record</span>
+      `;
+      document.getElementById('cancelResetBtn').textContent = 'Cancel Edit';
+
+      // Scroll form smoothly into view
+      formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showToast(`Editing "${team.teamNumberAndName}". Make changes & hit update!`, 'amber');
+    }
+
+    // Prompt Delete Team
+    function promptDeleteTeam(id) {
+      const team = teams.find(t => t.id === id);
+      if (!team) return;
+      pendingDelete = { type: 'team', id };
+      document.getElementById('deleteModalMsg').textContent = `Are you sure you want to remove "${team.teamNumberAndName}" from memory?`;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    // Prompt Wipe Database
+    function confirmWipeDatabase() {
+      if (teams.length === 0 && awards.length === 0) {
+        showToast('Memory is already clean.');
+        return;
+      }
+      pendingDelete = { type: 'all' };
+      document.getElementById('deleteModalMsg').textContent = 'Warning: This will delete ALL scouted teams and awards from memory!';
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      pendingDelete = null;
+      document.getElementById('deleteModal').classList.add('hidden');
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+      if (!pendingDelete) return;
+
+      if (pendingDelete.type === 'team') {
+        // If we're currently editing this team, reset form
+        if (document.getElementById('editingTeamId').value === pendingDelete.id) {
+          resetTeamForm();
+        }
+        teams = teams.filter(t => t.id !== pendingDelete.id);
+        persistData();
+        renderTeams();
+        showToast('Team removed from memory.');
+      } else if (pendingDelete.type === 'award') {
+        awards = awards.filter(a => a.id !== pendingDelete.id);
+        persistData();
+        renderAwards();
+        showToast('Award removed.');
+      } else if (pendingDelete.type === 'all') {
+        teams = [];
+        awards = [];
+        persistData();
+        renderTeams();
+        renderAwards();
+        resetTeamForm();
+        showToast('All database memory cleared.');
+      }
+
+      closeDeleteModal();
+    });
+
+    // Handle Awards Submit
+    function handleAwardSubmit(e) {
+      e.preventDefault();
+      const awardName = document.getElementById('awardName').value.trim();
+      const awardTeam = document.getElementById('awardTeam').value.trim();
+      const awardTournament = document.getElementById('awardTournament').value.trim();
+
+      const newAward = {
+        id: 'award_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        name: awardName,
+        team: awardTeam,
+        tournament: awardTournament,
+        timestamp: new Date().toISOString()
+      };
+
+      awards.unshift(newAward);
+      persistData();
+      renderAwards();
+      renderTeams(); // refresh associated team awards
+      document.getElementById('awardForm').reset();
+      showToast(`Award "${awardName}" saved to memory!`);
+    }
+
+    function promptDeleteAward(id) {
+      const award = awards.find(a => a.id === id);
+      if (!award) return;
+      pendingDelete = { type: 'award', id };
+      document.getElementById('deleteModalMsg').textContent = `Remove award "${award.name}" for ${award.team}?`;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    // Render Awards
+    function renderAwards() {
+      const container = document.getElementById('awardsContainer');
+      if (awards.length === 0) {
+        container.innerHTML = `
+          <div class="p-3.5 text-center text-xs text-gray-500 bg-raptor-dark/50 rounded-xl border border-dashed border-gray-800">
+            No awards saved in memory yet.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = awards.map(a => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-raptor-dark border border-raptor-border hover:border-amber-500/40 transition">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-semibold text-amber-400">${escapeHtml(a.name)}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-md bg-gray-800 text-gray-200 font-mono font-medium">${escapeHtml(a.team)}</span>
+            </div>
+            ${a.tournament ? `<p class="text-[11px] text-gray-400">${escapeHtml(a.tournament)}</p>` : ''}
+          </div>
+          <button onclick="promptDeleteAward('${a.id}')" title="Delete award" class="p-1.5 text-gray-500 hover:text-rose-400 transition rounded-lg hover:bg-rose-500/10 ml-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6"/></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Render Teams Database
+    function renderTeams() {
+      const container = document.getElementById('teamsCardContainer');
+      const searchQuery = (document.getElementById('searchMemory').value || '').toLowerCase().trim();
+      const filterRobot = document.getElementById('filterRobotType').value;
+      const filterDriver = document.getElementById('filterDriving').value;
+
+      // Filtering logic
+      const filtered = teams.filter(t => {
+        const searchCorpus = [
+          t.teamNumberAndName,
+          t.robotType,
+          t.drivingSkill,
+          t.compatibility,
+          t.tournamentDate,
+          t.breakOften,
+          t.isConsistent,
+          ...(t.scoringStrengths || [])
+        ].join(' ').toLowerCase();
+
+        if (searchQuery && !searchCorpus.includes(searchQuery)) {
+          return false;
+        }
+
+        // Robot type filter
+        if (filterRobot !== 'ALL') {
+          if (filterRobot === 'Other') {
+            const standard = ['arm', 'shooter', 'catapult'];
+            if (standard.includes((t.robotType || '').toLowerCase())) {
+              return false;
+            }
+          } else {
+            if ((t.robotType || '').toLowerCase() !== filterRobot.toLowerCase()) {
+              return false;
+            }
+          }
+        }
+
+        // Driver skill filter
+        if (filterDriver !== 'ALL') {
+          if (t.drivingSkill !== filterDriver) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      document.getElementById('filteredCountTag').textContent = 
+        teams.length > 0 ? `Showing ${filtered.length} of ${teams.length}` : '';
+
+      if (filtered.length === 0) {
+        if (teams.length === 0) {
+          container.innerHTML = `
+            <div class="bg-raptor-panel rounded-2xl border border-dashed border-raptor-border p-12 text-center">
+              <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3 border border-emerald-500/20">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              </div>
+              <h3 class="text-base font-tech font-bold text-white uppercase tracking-wider">Memory is Clean</h3>
+              <p class="text-xs text-gray-400 max-w-sm mx-auto mt-1">
+                Zero teams in memory. Fill out "The Teams Template" on the left and hit Save to start building your Robo Raptors database.
+              </p>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="bg-raptor-panel rounded-2xl border border-raptor-border p-8 text-center text-gray-400 text-xs">
+              No scouted teams match your search or filter.
+            </div>
+          `;
+        }
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => {
+        // Find associated awards
+        const teamAwards = awards.filter(a => 
+          a.team && t.teamNumberAndName && (
+            a.team.toLowerCase().includes(t.teamNumberAndName.toLowerCase()) || 
+            t.teamNumberAndName.toLowerCase().includes(a.team.toLowerCase())
+          )
+        );
+
+        const scoringBadges = (t.scoringStrengths && t.scoringStrengths.length > 0)
+          ? t.scoringStrengths.map(s => `<span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-semibold">${escapeHtml(s)}</span>`).join(' ')
+          : '<span class="text-gray-500 text-xs">None listed</span>';
+
+        return `
+          <div class="bg-raptor-panel rounded-2xl border border-raptor-border hover:border-emerald-500/50 p-5 shadow-lg transition duration-200 group">
+            
+            <!-- Card Header -->
+            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-raptor-border/80 pb-3">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-base sm:text-lg font-tech font-bold text-white tracking-wide">
+                    ${escapeHtml(t.teamNumberAndName)}
+                  </h3>
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                    ${escapeHtml(t.robotType || 'Arm')}
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium ${t.dimensions === 'Fits in size' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                    ${escapeHtml(t.dimensions || 'Fits in size')}
+                  </span>
+                </div>
+                ${t.tournamentDate ? `
+                  <p class="text-xs text-gray-400 flex items-center gap-1.5 mt-1">
+                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    ${escapeHtml(t.tournamentDate)}
+                  </p>
+                ` : ''}
+              </div>
+
+              <!-- Edit & Delete Buttons -->
+              <div class="flex items-center gap-1.5">
+                <button onclick="editTeam('${t.id}')" title="Edit and update team" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-gray-800 hover:bg-amber-500 hover:text-black text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  Edit
+                </button>
+                <button onclick="promptDeleteTeam('${t.id}')" title="Delete team" class="p-1.5 rounded-xl bg-gray-800 text-gray-400 hover:bg-rose-500/20 hover:text-rose-400 transition active:scale-95">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Core Specifications Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-3.5 text-xs">
+              <div class="bg-raptor-dark/80 p-2.5 rounded-xl border border-raptor-border/80">
+                <span class="text-gray-400 text-[10px] uppercase font-semibold block mb-0.5">Driving Skill</span>
+                <span class="text-white font-tech font-bold text-sm text-emerald-400">
+                  ${escapeHtml(t.drivingSkill || 'N/A')}
+                </span>
+              </div>
+
+              <div class="bg-raptor-dark/80 p-2.5 rounded-xl border border-raptor-border/80">
+                <span class="text-gray-400 text-[10px] uppercase font-semibold block mb-0.5">Auto Capability</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-semibold ${t.autoCapable === 'Yes' ? 'text-emerald-400' : 'text-gray-400'}">
+                    ${t.autoCapable || 'No'}
+                  </span>
+                  ${t.autoScore ? `<span class="text-[11px] text-gray-400 font-mono">(${escapeHtml(t.autoScore)})</span>` : ''}
+                </div>
+              </div>
+
+              <div class="bg-raptor-dark/80 p-2.5 rounded-xl border border-raptor-border/80 col-span-2">
+                <span class="text-gray-400 text-[10px] uppercase font-semibold block mb-1">Scoring Strengths</span>
+                <div class="flex flex-wrap gap-1">
+                  ${scoringBadges}
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes on Reliability & Compatibility -->
+            <div class="space-y-2 text-xs pt-1">
+              ${(t.breakOften || t.isConsistent) ? `
+                <div class="bg-raptor-dark/50 p-3 rounded-xl border border-raptor-border text-gray-300 space-y-1">
+                  <div class="text-[11px] font-semibold text-emerald-400 uppercase tracking-wide">Notes on Reliability</div>
+                  ${t.breakOften ? `<p><strong class="text-gray-400 font-normal">Breaks often?</strong> <span class="text-white">${escapeHtml(t.breakOften)}</span></p>` : ''}
+                  ${t.isConsistent ? `<p><strong class="text-gray-400 font-normal">Consistent?</strong> <span class="text-white">${escapeHtml(t.isConsistent)}</span></p>` : ''}
+                </div>
+              ` : ''}
+
+              ${t.compatibility ? `
+                <div class="bg-raptor-dark/50 p-3 rounded-xl border border-raptor-border text-gray-300">
+                  <div class="text-[11px] font-semibold text-teal-400 uppercase tracking-wide mb-0.5">Compatibility with our robot</div>
+                  <p class="text-gray-200 leading-relaxed">${escapeHtml(t.compatibility)}</p>
+                </div>
+              ` : ''}
+
+              <!-- Awards associated with this team -->
+              ${teamAwards.length > 0 ? `
+                <div class="flex items-center gap-2 pt-1 flex-wrap">
+                  <span class="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                    <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    Awards:
+                  </span>
+                  ${teamAwards.map(a => `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-medium">${escapeHtml(a.name)}</span>`).join(' ')}
+                </div>
+              ` : ''}
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Helper: Generate Updated Self-Contained HTML Code with current memory baked directly into source
+    function generateBakedHtmlSource() {
+      // Serialize current state
+      const serializedTeams = JSON.stringify(teams, null, 2);
+      const serializedAwards = JSON.stringify(awards, null, 2);
+
+      // Extract current page document
+      const currentDocHtml = document.documentElement.outerHTML;
+      let fullHtml = "<!DOCTYPE html>\n<html lang=\"en\">\n" + currentDocHtml.substring(currentDocHtml.indexOf('<head>'));
+
+      // Bake data into init declaration
+      const hookRegex = /(\/\/\s*%EMBEDDED_DATA_HOOK%[\s\S]*?let teams\s*=\s*)[^;]*(;[\s\S]*?let awards\s*=\s*)[^;]*(;)/;
+      if (hookRegex.test(fullHtml)) {
+        fullHtml = fullHtml.replace(hookRegex, `$1${serializedTeams}$2${serializedAwards}$3`);
+      } else {
+        // Fallback replacement if hook altered
+        fullHtml = fullHtml.replace(/let teams = \[[\s\S]*?\];/, `let teams = ${serializedTeams};`);
+        fullHtml = fullHtml.replace(/let awards = \[[\s\S]*?\];/, `let awards = ${serializedAwards};`);
+      }
+
+      return fullHtml;
+    }
+
+    // "SAVES AND UPDATES THE CODE": Download self-contained HTML file with memory baked in
+    function downloadSelfContainedHtml() {
+      const updatedCode = generateBakedHtmlSource();
+      const blob = new Blob([updatedCode], { type: 'text/html;charset=utf-8' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `Robo_Raptors_Database_${new Date().toISOString().slice(0,10)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+      showToast('Downloaded updated HTML file with memory baked in!');
+    }
+
+    // Copy updated HTML code to clipboard
+    function copySelfContainedHtml() {
+      const updatedCode = generateBakedHtmlSource();
+      const tempArea = document.createElement('textarea');
+      tempArea.value = updatedCode;
+      tempArea.style.position = 'fixed';
+      tempArea.style.left = '-9999px';
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Updated HTML code copied to clipboard!');
+      } catch (err) {
+        showToast('Failed to copy code directly.');
+      }
+      document.body.removeChild(tempArea);
+    }
+
+    // Export Database as JSON Backup
+    function exportJsonBackup() {
+      const dataToExport = {
+        title: "Robo Raptors Teams Database Backup",
+        exportDate: new Date().toISOString(),
+        teams: teams,
+        awards: awards
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `RoboRaptors_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('JSON backup exported!');
+    }
+
+    // Import Database from JSON Backup
+    function importJsonBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed.teams)) {
+            teams = parsed.teams;
+            awards = Array.isArray(parsed.awards) ? parsed.awards : [];
+          } else if (Array.isArray(parsed)) {
+            teams = parsed;
+          } else {
+            showToast('Invalid backup file format.', 'amber');
+            return;
+          }
+
+          persistData();
+          renderTeams();
+          renderAwards();
+          showToast(`Imported ${teams.length} teams into memory!`);
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to parse JSON file.', 'amber');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = ''; // Reset input
+    }
+
+    // Helper: Escape HTML to avoid XSS
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Start application on page load
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
